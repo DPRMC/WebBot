@@ -1,0 +1,25 @@
+{
+  "name": "dprmc/web-bot",
+  "description": "An extensible bot to perform tasks on the internet.",
+  "type": "library",
+  "require": {
+    "guzzlehttp/guzzle": "^6.3"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^6.3",
+    "satooshi/php-coveralls": "^1.0"
+  },
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Michael Drennen",
+      "email": "mdrennen@deerparkrd.com"
+    }
+  ],
+  "minimum-stability": "stable",
+  "autoload": {
+    "classmap": [
+      "src/"
+    ]
+  }
+}
