@@ -13,11 +13,13 @@ class Step {
     protected $timeout;
     protected $formParams;
     protected $responseBody;
+    protected $failureRules;
 
 
     public function __construct() {
-        $this->headers    = [];
-        $this->formParams = [];
+        $this->headers      = [];
+        $this->formParams   = [];
+        $this->failureRules = [];
     }
 
     /**
@@ -90,6 +92,19 @@ class Step {
      */
     public function addFormParam( $name, $value ) {
         $this->formParams[ $name ] = $value;
+
+        return $this;
+    }
+
+    /**
+     * @param string                    $name        The index of the Failure Rule object in this Step.
+     * @param \DPRMC\WebBot\FailureRule $failureRule The failure rule object.
+     *
+     * @return $this
+     */
+    public function addFailureRule( $name, $failureRule ) {
+
+        $this->failureRules[ $name ] = $failureRule;
 
         return $this;
     }

@@ -19,11 +19,24 @@ class WebBotTest extends TestCase {
         $this->assertInstanceOf( WebBot::class, $bot );
     }
 
-    public function testRunWebBotWithOneStepShould() {
+    public function testRunWebBotWithOneStepShouldGetNonEmptyResponseBody() {
         $bot               = new WebBot();
         $stepOneNameForBot = 'test';
         $stepOne           = new Step();
         $stepOne->setMethod( 'GET' )->setUrl( 'github.com' )->setTimeout( 10 )->addFormParam( 'foo', "bar" );
+        $body = $bot
+            ->addStep( $stepOneNameForBot, $stepOne )
+            ->run()
+            ->getResponseBody( $stepOneNameForBot );
+
+        $this->assertNotEmpty( $body );
+    }
+
+    public function testRunWebBotWithFailureRuleShouldThrowException() {
+        $bot               = new WebBot();
+        $stepOneNameForBot = 'test';
+        $stepOne           = new Step();
+        $stepOne->setMethod( 'GET' )->setUrl( 'github.com' )->addFailureRule( 'testF' );
         $body = $bot
             ->addStep( $stepOneNameForBot, $stepOne )
             ->run()
