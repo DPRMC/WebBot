@@ -12,6 +12,7 @@ class Step {
     protected $body;
     protected $timeout;
     protected $formParams;
+    protected $queryParams;
     protected $responseBody;
     protected $failureRules;
 
@@ -30,13 +31,25 @@ class Step {
      * @return \GuzzleHttp\Psr7\Response;
      */
     public function run( &$client ) {
-        return $client->send( $this->getRequestObject(), [ 'form_params'     => $this->formParams,
-                                                           'allow_redirects' => true,
-                                                           'debug'           => false,
-                                                           'timeout'         => $this->timeout,
-                                                           'sink'            => null,
-                                                           'verify'          => false,
+        /**
+         * @var \GuzzleHttp\Psr7\Response $response
+         */
+        $response = $client->send( $this->getRequestObject(), [ 'form_params'     => $this->formParams,
+                                                                'allow_redirects' => true,
+                                                                'debug'           => false,
+                                                                'timeout'         => $this->timeout,
+                                                                'sink'            => null,
+                                                                'verify'          => false,
         ] );
+
+        foreach ( $this->failureRules as $failureRule ):
+            /**
+             * @var \DPRMC\WebBot\FailureRule $failureRule
+             */
+            $failureRule->run( $response );
+        endforeach;
+
+        return $response;
     }
 
 
@@ -97,6 +110,22 @@ class Step {
     }
 
     /**
+     * Fluent interface for adding query parameters to be sent with this step.
+     *
+     * @param $name
+     * @param $value
+     *
+     * @return $this
+     */
+    public function addQueryParam( $name, $value ) {
+        $this->queryParams[ $name ] = $value;
+
+        return $this;
+    }
+
+    /**
+     * Fluent method for adding a failure rule to this step.
+     *
      * @param string                    $name        The index of the Failure Rule object in this Step.
      * @param \DPRMC\WebBot\FailureRule $failureRule The failure rule object.
      *
