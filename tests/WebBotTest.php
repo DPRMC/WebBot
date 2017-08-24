@@ -56,8 +56,8 @@ class WebBotTest extends TestCase {
      * Kind of a weird failure rule to test. I request our github page, and set a failure rule for text that I KNOW will
      * be present. There is nothing really causing an error on that page, but this sufficiently tests the code.
      */
-    public function testRunWebBotWithFailureRuleShouldThrowException() {
-        $this->expectException( Triggered::class );
+    public function testRunWebBotWithFailureRuleShouldReturnFailure() {
+
         $bot               = new WebBot();
         $stepOneNameForBot = 'test';
 

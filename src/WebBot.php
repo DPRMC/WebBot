@@ -5,10 +5,25 @@ namespace DPRMC\WebBot;
 use GuzzleHttp\Client;
 
 class WebBot {
+    /**
+     * @var \GuzzleHttp\Client The Client that sends the HTTP requests.
+     */
     protected $client;
-    protected $responses;
+
+    /**
+     * @var array $steps An array of Step objects where the index is the step name.
+     */
     protected $steps;
 
+    /**
+     * @var array $stepResults An array of StepResult objects where the index is the step name.
+     */
+    protected $stepResults;
+
+    /**
+     * @var array $responses An array of Response objects where the index is the step name.
+     */
+    protected $responses;
 
     /**
      * WebBot constructor.
@@ -26,10 +41,11 @@ class WebBot {
      * @param string             $name
      * @param \DPRMC\WebBot\Step $step
      *
-     * @return $this Requied for Fluent interface.
+     * @return $this Required for Fluent interface.
      */
     public function addStep( $name, $step ) {
         $this->steps[ $name ] = $step;
+        $this->initResponseElement( $name );
 
         return $this;
     }
@@ -48,8 +64,19 @@ class WebBot {
      */
     protected function runStep( $name, $step ) {
         $this->initResponseElement( $name );
+        $this->initStepResultElement( $name );
+        $stepResult                 = $step->run( $this->client );
+        $this->stepResults[ $name ] = $stepResult;
+        $this->responses[ $name ]   = $stepResult->getResponse();
+    }
 
-        $this->responses[ $name ] = $step->run( $this->client );
+    /**
+     * Before I run a Step, the WebBot needs to initialize the array index where I will be storing the StepResult.
+     *
+     * @param string $name
+     */
+    protected function initStepResultElement( $name ) {
+        $this->stepResults[ $name ] = null;
     }
 
     /**
@@ -61,6 +88,11 @@ class WebBot {
         $this->responses[ $name ] = null;
     }
 
+    /**
+     * @param string $name The step name of the Response who's body you want.
+     *
+     * @return \GuzzleHttp\Psr7\Stream|\Psr\Http\Message\StreamInterface
+     */
     public function getResponseBody( $name ) {
         /**
          * @var \GuzzleHttp\Psr7\Response $response

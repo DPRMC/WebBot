@@ -14,12 +14,14 @@ class Step {
     protected $formParams;
     protected $queryParams;
     protected $responseBody;
+    protected $successRules;
     protected $failureRules;
 
 
     public function __construct() {
         $this->headers      = [];
         $this->formParams   = [];
+        $this->successRules = [];
         $this->failureRules = [];
     }
 
@@ -28,7 +30,7 @@ class Step {
      *
      * @param \GuzzleHttp\Client $client
      *
-     * @return \GuzzleHttp\Psr7\Response;
+     * @return \DPRMC\WebBot\StepResult
      */
     public function run( &$client ) {
         /**
@@ -42,17 +44,39 @@ class Step {
                                                                 'verify'          => false,
         ] );
 
+        /**
+         *
+         */
+        foreach ( $this->successRules as $successRule ):
+            /**
+             * @var \DPRMC\WebBot\FailureRule $successRule
+             */
+            $stepResult = $successRule->run( $response );
+            if ( false !== $stepResult ):
+                return $stepResult;
+            endif;
+        endforeach;
+
+        /**
+         *
+         */
         foreach ( $this->failureRules as $failureRule ):
             /**
              * @var \DPRMC\WebBot\FailureRule $failureRule
              */
-            $failureRule->run( $response );
+            $stepResult = $failureRule->run( $response );
+            if ( false !== $stepResult ):
+                return $stepResult;
+            endif;
         endforeach;
 
-        return $response;
+        return new ContinueToNextStep( $response );
     }
 
 
+    /**
+     * @return \GuzzleHttp\Psr7\Request
+     */
     protected function getRequestObject() {
         return new Request( $this->method, $this->url, $this->headers, $this->body );
     }

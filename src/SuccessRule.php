@@ -2,13 +2,13 @@
 
 namespace DPRMC\WebBot;
 
-use DPRMC\WebBot\Exceptions\FailureRule\UndefinedFailureRuleType;
+use DPRMC\WebBot\Exceptions\FailureRule\UndefinedSuccessRuleType;
 use GuzzleHttp\Psr7\Response;
 
-class FailureRule {
+class SuccessRule {
 
     /**
-     * A list of constants that represent the different types of failure rules that you can apply.
+     * A list of constants that represent the different types of success rules that you can apply.
      */
     const regex = 'regex';
 
@@ -23,13 +23,13 @@ class FailureRule {
     ];
 
     /**
-     * @var string $type The type of failure rule this is. Valid types are in the const array self::types
+     * @var string $type The type of success rule this is. Valid types are in the const array self::types
      */
     protected $type;
 
     /**
      * @var mixed An parameters that you want to pass to the regex rule that will be run as defined by the $type of
-     *      failure rule you want to run. This could be an array, scalar, object, anything... Just depends on what type
+     *      success rule you want to run. This could be an array, scalar, object, anything... Just depends on what type
      *      of rule you are running.
      */
     protected $parameters;
@@ -37,17 +37,10 @@ class FailureRule {
     public function __construct() {
     }
 
-    /**
-     * Fluent method to set the type of failure rule this is.
-     *
-     * @param $type
-     *
-     * @return $this
-     * @throws \DPRMC\WebBot\Exceptions\FailureRule\UndefinedFailureRuleType
-     */
+
     public function setType( $type ) {
         if ( ! in_array( $type, self::types ) ):
-            throw new UndefinedFailureRuleType( "You attempted to set a failure rule type of [" . $this->type . "]" );
+            throw new UndefinedSuccessRuleType( "You attempted to set a success rule type of [" . $this->type . "]" );
         endif;
         $this->type = $type;
 
@@ -55,7 +48,7 @@ class FailureRule {
     }
 
     /**
-     * A fluent method to set the parameters needed for the FailureRule you are setting.
+     * A fluent method to set the parameters needed for the SuccessRule you are setting.
      *
      * @param $parameters
      *
@@ -70,21 +63,21 @@ class FailureRule {
     /**
      * @param Response $response
      *
-     * @throws \DPRMC\WebBot\Exceptions\FailureRule\UndefinedFailureRuleType
+     * @throws \DPRMC\WebBot\Exceptions\FailureRule\UndefinedSuccessRuleType
      * @return \DPRMC\WebBot\StepResult|bool
      */
     public function run( $response ) {
 
         switch ( $this->type ):
             case self::regex:
-                $result = $this->runFailureRuleRegEx( $this->parameters, $response->getBody() );
+                $result = $this->runSuccessRuleRegEx( $this->parameters, $response->getBody() );
                 break;
             default:
-                throw new UndefinedFailureRuleType( "You attempted to run a failure rule type of [" . $this->type . "]" );
+                throw new UndefinedSuccessRuleType( "You attempted to run a success rule type of [" . $this->type . "]" );
         endswitch;
         // TRUE represents a Failure here.
         if ( true === $result ):
-            return new Failure( $response );
+            return new Success( $response );
         endif;
 
         return false;
@@ -96,7 +89,7 @@ class FailureRule {
      *
      * @return bool
      */
-    protected function runFailureRuleRegEx( $pattern, $string ) {
+    protected function runSuccessRuleRegEx( $pattern, $string ) {
         if ( preg_match( '/' . $pattern . '/', $string ) === 1 ):
             return true;
         endif;
