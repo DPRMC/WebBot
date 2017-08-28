@@ -18,11 +18,51 @@ class Step {
     protected $failureRules;
 
 
+    protected $breakOnFailure = false;
+    protected $breakOnSuccess = false;
+
+
     public function __construct() {
         $this->headers      = [];
         $this->formParams   = [];
         $this->successRules = [];
         $this->failureRules = [];
+    }
+
+    /**
+     * @return bool
+     */
+    public function breaksOnFailure() {
+        return $this->breakOnFailure;
+    }
+
+    /**
+     * @param $breakOnFailure
+     *
+     * @return $this
+     */
+    public function setBreakOnFailure( $breakOnFailure ) {
+        $this->breakOnFailure = $breakOnFailure;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function breaksOnSuccess() {
+        return $this->breakOnSuccess;
+    }
+
+    /**
+     * @param $breakOnSuccess
+     *
+     * @return $this
+     */
+    public function setBreakOnSuccess( $breakOnSuccess ) {
+        $this->breakOnSuccess = $breakOnSuccess;
+
+        return $this;
     }
 
     /**
@@ -51,7 +91,7 @@ class Step {
             /**
              * @var \DPRMC\WebBot\FailureRule $successRule
              */
-            $stepResult = $successRule->run( $response );
+            $stepResult = $successRule->run( $response, $this->breaksOnSuccess() );
             if ( false !== $stepResult ):
                 return $stepResult;
             endif;
@@ -64,13 +104,13 @@ class Step {
             /**
              * @var \DPRMC\WebBot\FailureRule $failureRule
              */
-            $stepResult = $failureRule->run( $response );
+            $stepResult = $failureRule->run( $response, $this->breaksOnFailure() );
             if ( false !== $stepResult ):
                 return $stepResult;
             endif;
         endforeach;
 
-        return new ContinueToNextStep( $response );
+        return new ContinueToNextStep( $response, false );
     }
 
 
@@ -161,6 +201,20 @@ class Step {
 
         return $this;
     }
+
+    /**
+     * @param $name
+     * @param $successRule
+     *
+     * @return $this
+     */
+    public function addSuccessRule( $name, $successRule ) {
+
+        $this->successRules[ $name ] = $successRule;
+
+        return $this;
+    }
+
 
 
 }

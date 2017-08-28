@@ -3,7 +3,6 @@
 namespace DPRMC\WebBot;
 
 use DPRMC\WebBot\Exceptions\FailureRule\UndefinedSuccessRuleType;
-use GuzzleHttp\Psr7\Response;
 
 class SuccessRule {
 
@@ -61,12 +60,13 @@ class SuccessRule {
     }
 
     /**
-     * @param Response $response
+     * @param $response
+     * @param $breaksOnSuccess
      *
+     * @return bool|\DPRMC\WebBot\Success
      * @throws \DPRMC\WebBot\Exceptions\FailureRule\UndefinedSuccessRuleType
-     * @return \DPRMC\WebBot\StepResult|bool
      */
-    public function run( $response ) {
+    public function run( $response, $breaksOnSuccess ) {
 
         switch ( $this->type ):
             case self::regex:
@@ -77,7 +77,7 @@ class SuccessRule {
         endswitch;
         // TRUE represents a Failure here.
         if ( true === $result ):
-            return new Success( $response );
+            return new Success( $response, $breaksOnSuccess );
         endif;
 
         return false;

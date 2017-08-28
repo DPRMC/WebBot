@@ -57,6 +57,9 @@ class WebBot {
         foreach ( $this->steps as $name => $step ):
             $stepResult = $this->runStep( $name, $step );
             // @TODO Create a StepResult method called shouldBreakRun(), so the WebBot will return $this and not execute any further Steps.
+            if ( $stepResult->breaks() ):
+                return $this;
+            endif;
         endforeach;
 
         return $this;
@@ -108,5 +111,14 @@ class WebBot {
         $response = $this->responses[ $name ];
 
         return $response->getBody();
+    }
+
+    /**
+     * @param $name
+     *
+     * @return \DPRMC\WebBot\StepResult Could be Success, Failure, or ContinueToNextStep
+     */
+    public function getStepResult( $name ) {
+        return $this->stepResults[ $name ];
     }
 }

@@ -69,11 +69,12 @@ class FailureRule {
 
     /**
      * @param Response $response
+     * @param bool     $breaksOnFailure
      *
+     * @return bool|\DPRMC\WebBot\Failure
      * @throws \DPRMC\WebBot\Exceptions\FailureRule\UndefinedFailureRuleType
-     * @return \DPRMC\WebBot\StepResult|bool
      */
-    public function run( $response ) {
+    public function run( $response, $breaksOnFailure ) {
 
         switch ( $this->type ):
             case self::regex:
@@ -84,7 +85,7 @@ class FailureRule {
         endswitch;
         // TRUE represents a Failure here.
         if ( true === $result ):
-            return new Failure( $response );
+            return new Failure( $response, $breaksOnFailure );
         endif;
 
         return false;
