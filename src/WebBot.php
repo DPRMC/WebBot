@@ -50,9 +50,13 @@ class WebBot {
         return $this;
     }
 
+    /**
+     * @return $this
+     */
     public function run() {
         foreach ( $this->steps as $name => $step ):
-            $this->runStep( $name, $step );
+            $stepResult = $this->runStep( $name, $step );
+            // @TODO Create a StepResult method called shouldBreakRun(), so the WebBot will return $this and not execute any further Steps.
         endforeach;
 
         return $this;
@@ -61,6 +65,8 @@ class WebBot {
     /**
      * @param string             $name
      * @param \DPRMC\WebBot\Step $step
+     *
+     * @return \DPRMC\WebBot\StepResult;
      */
     protected function runStep( $name, $step ) {
         $this->initResponseElement( $name );
@@ -68,6 +74,8 @@ class WebBot {
         $stepResult                 = $step->run( $this->client );
         $this->stepResults[ $name ] = $stepResult;
         $this->responses[ $name ]   = $stepResult->getResponse();
+
+        return $stepResult;
     }
 
     /**
