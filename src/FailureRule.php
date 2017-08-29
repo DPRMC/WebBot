@@ -10,15 +10,16 @@ class FailureRule {
     /**
      * A list of constants that represent the different types of failure rules that you can apply.
      */
-    const regex = 'regex';
-
-    const notFound = 'notFound';
+    const regex           = 'regex';
+    const responseCodeNot = 'responseCodeNot'; // Typically 200 is passed in to this failure rule.
+    const notFound        = 'notFound';
 
     /**
      * An array defining all of the failure rule types that I can process.
      */
     const types = [
         self::regex,
+        self::responseCodeNot,
         self::notFound,
     ];
 
@@ -33,6 +34,10 @@ class FailureRule {
      *      of rule you are running.
      */
     protected $parameters;
+
+    public static function instance() {
+        return new static;
+    }
 
     public function __construct() {
     }
@@ -80,6 +85,9 @@ class FailureRule {
             case self::regex:
                 $result = $this->runFailureRuleRegEx( $this->parameters, $response->getBody() );
                 break;
+            case self::responseCodeNot:
+                $result = $this->runFailureRuleNotResponseCode( 200, $response->getStatusCode() );
+                break;
             default:
                 throw new UndefinedFailureRuleType( "You attempted to run a failure rule type of [" . $this->type . "]" );
         endswitch;
@@ -95,10 +103,26 @@ class FailureRule {
      * @param string $pattern The regex pattern.
      * @param string $string
      *
-     * @return bool
+     * @return bool True means failure
      */
     protected function runFailureRuleRegEx( $pattern, $string ) {
         if ( preg_match( '/' . $pattern . '/', $string ) === 1 ):
+            return true;
+        endif;
+
+        return false;
+    }
+
+    /**
+     * Pass in the code that would indicate success. Any other code indicates a failure.
+     *
+     * @param integer $codeThatMeansSuccess Typically 200
+     * @param         $actual
+     *
+     * @return bool
+     */
+    protected function runFailureRuleNotResponseCode( $codeThatMeansSuccess, $actual ) {
+        if ( $codeThatMeansSuccess == $actual ):
             return true;
         endif;
 

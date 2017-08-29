@@ -9,7 +9,8 @@ class SuccessRule {
     /**
      * A list of constants that represent the different types of success rules that you can apply.
      */
-    const regex = 'regex';
+    const regex        = 'regex';
+    const responseCode = 'responseCode';
 
     const notFound = 'notFound';
 
@@ -18,6 +19,7 @@ class SuccessRule {
      */
     const types = [
         self::regex,
+        self::responseCode,
         self::notFound,
     ];
 
@@ -32,6 +34,10 @@ class SuccessRule {
      *      of rule you are running.
      */
     protected $parameters;
+
+    public static function instance() {
+        return new static;
+    }
 
     public function __construct() {
     }
@@ -60,7 +66,7 @@ class SuccessRule {
     }
 
     /**
-     * @param $response
+     * @param \GuzzleHttp\Psr7\Response $response
      * @param $breaksOnSuccess
      *
      * @return bool|\DPRMC\WebBot\Success
@@ -68,9 +74,13 @@ class SuccessRule {
      */
     public function run( $response, $breaksOnSuccess ) {
 
+
         switch ( $this->type ):
             case self::regex:
                 $result = $this->runSuccessRuleRegEx( $this->parameters, $response->getBody() );
+                break;
+            case self::responseCode:
+                $result = $this->runSuccessRuleRegEx( $this->parameters, $response->getStatusCode() );
                 break;
             default:
                 throw new UndefinedSuccessRuleType( "You attempted to run a success rule type of [" . $this->type . "]" );
@@ -91,6 +101,20 @@ class SuccessRule {
      */
     protected function runSuccessRuleRegEx( $pattern, $string ) {
         if ( preg_match( '/' . $pattern . '/', $string ) === 1 ):
+            return true;
+        endif;
+
+        return false;
+    }
+
+    /**
+     * @param $expected
+     * @param $actual
+     *
+     * @return bool
+     */
+    protected function runSuccessRuleResponseCode( $expected, $actual ) {
+        if ( $expected == $actual ):
             return true;
         endif;
 

@@ -2,13 +2,19 @@
 
 namespace DPRMC\WebBot;
 
+use DPRMC\WebBot\Exceptions\WebBot\ResponseObjectNotSetForIndex;
 use GuzzleHttp\Client;
+use GuzzleHttp\Psr7\Response;
+
 
 class WebBot {
+
+
     /**
-     * @var \GuzzleHttp\Client The Client that sends the HTTP requests.
+     * @var \GuzzleHttp\Client $client
      */
     protected $client;
+
 
     /**
      * @var array $steps An array of Step objects where the index is the step name.
@@ -25,6 +31,11 @@ class WebBot {
      */
     protected $responses;
 
+
+    public static function instance() {
+        return new static;
+    }
+
     /**
      * WebBot constructor.
      * @link http://docs.guzzlephp.org/en/stable/quickstart.html#cookies Explains the cookies setting in the Client.
@@ -40,12 +51,15 @@ class WebBot {
      *
      * @param string             $name
      * @param \DPRMC\WebBot\Step $step
+     * @param boolean            $debug
      *
      * @return $this Required for Fluent interface.
      */
-    public function addStep( $name, $step ) {
+    public function addStep( $name, $step, $debug = false ) {
+        $step->setDebug( $debug );
         $this->steps[ $name ] = $step;
         $this->initResponseElement( $name );
+
 
         return $this;
     }
@@ -63,6 +77,12 @@ class WebBot {
         endforeach;
 
         return $this;
+    }
+
+    protected function initStepResultElements() {
+        foreach ( $this->steps as $name => $step ):
+            $this->initStepResultElement( $name );
+        endforeach;
     }
 
     /**
@@ -96,19 +116,24 @@ class WebBot {
      * @param string $name
      */
     protected function initResponseElement( $name ) {
-        $this->responses[ $name ] = null;
+        $this->responses[ $name ] = new Response();
     }
 
     /**
      * @param string $name The step name of the Response who's body you want.
      *
      * @return \GuzzleHttp\Psr7\Stream|\Psr\Http\Message\StreamInterface
+     * @throws \DPRMC\WebBot\Exceptions\WebBot\ResponseObjectNotSetForIndex
      */
     public function getResponseBody( $name ) {
         /**
          * @var \GuzzleHttp\Psr7\Response $response
          */
         $response = $this->responses[ $name ];
+
+        if ( Response::class !== get_class( $response ) ):
+            throw new ResponseObjectNotSetForIndex( "The response object was not set for the step labeled: " . $name );
+        endif;
 
         return $response->getBody();
     }
@@ -120,5 +145,12 @@ class WebBot {
      */
     public function getStepResult( $name ) {
         return $this->stepResults[ $name ];
+    }
+
+    /**
+     * @return array An array of StepResult objects.
+     */
+    public function getStepResults() {
+        return $this->stepResults;
     }
 }

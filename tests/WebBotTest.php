@@ -16,43 +16,39 @@ use PHPUnit\Framework\TestCase;
 
 class WebBotTest extends TestCase {
 
+    //public function testTEst(){
+    //    $step = Step::instance();
+    //    var_dump($step); flush(); die();
+    //}
+
     public function testWebBotConstructorShouldReturnWebBotObject() {
-        $bot = new WebBot();
+        $bot = WebBot::instance();
         $this->assertInstanceOf( WebBot::class, $bot );
     }
 
     public function testAddStepShouldAddStepObjectToWebBot() {
-        $bot = new WebBot();
-        $bot->addStep( 'test', new Step() );
+        $bot = WebBot::instance()->addStep( 'test', new Step() );
         $this->assertInstanceOf( WebBot::class, $bot );
     }
 
-    /**
-     * @group md
-     */
+
     public function testRunWebBotWithOneStepShouldGetNonEmptyResponseBody() {
-        $bot               = new WebBot();
         $stepOneNameForBot = 'test';
-        $stepOne           = new Step();
-        $stepOne->setMethod( 'GET' )->setUrl( 'github.com' )->setTimeout( 10 )->addQueryParam( 'foo', "bar" );
-        $body = $bot
+        $stepOne           = Step::instance()->setMethod( 'GET' )->setUrl( 'github.com' )->setTimeout( 10 )->addQueryParam( 'foo', "bar" );
+        $body              = WebBot::instance()
             ->addStep( $stepOneNameForBot, $stepOne )
             ->run()
             ->getResponseBody( $stepOneNameForBot );
-
         $this->assertNotEmpty( $body );
     }
 
     public function testRunWebBotWithFormParamsShouldGetValidResponse() {
-        $bot               = new WebBot();
         $stepOneNameForBot = 'test';
-        $stepOne           = new Step();
-        $stepOne->setMethod( 'POST' )->setUrl( 'github.com' )->setTimeout( 10 )->addFormParam( 'foo', "bar" );
-        $body = $bot
+        $stepOne           = Step::instance()->setMethod( 'POST' )->setUrl( 'github.com' )->setTimeout( 10 )->addFormParam( 'foo', "bar" );
+        $body              = WebBot::instance()
             ->addStep( $stepOneNameForBot, $stepOne )
             ->run()
             ->getResponseBody( $stepOneNameForBot );
-
         $this->assertNotEmpty( $body );
     }
 
@@ -61,109 +57,67 @@ class WebBotTest extends TestCase {
      * be present. There is nothing really causing an error on that page, but this sufficiently tests the code.
      */
     public function testRunWebBotWithFailureRuleShouldCreateFailureStep() {
-
-        $bot               = new WebBot();
+        $failureRuleOne    = FailureRule::instance()->setType( FailureRule::regex )->setParameters( "DPRMC" );
         $stepOneNameForBot = 'test';
-
-        $failureRuleOne = new FailureRule();
-        $failureRuleOne->setType( FailureRule::regex )->setParameters( "DPRMC" );
-
-        $stepOne = new Step();
-        $stepOne->setMethod( 'GET' )
+        $stepOne           = Step::instance()->setMethod( 'GET' )
             ->setUrl( 'https://github.com/dprmc/' )
             ->addFailureRule( 'testFailureRule', $failureRuleOne )
             ->setBreakOnFailure( true );
-
-        $bot->addStep( $stepOneNameForBot, $stepOne )->run();
-
-        $failure = $bot->getStepResult( $stepOneNameForBot );
-
+        $failure           = WebBot::instance()->addStep( $stepOneNameForBot, $stepOne )->run()->getStepResult( $stepOneNameForBot );
         $this->assertInstanceOf( Failure::class, $failure );
     }
 
 
     public function testRunWebBotWithFailureRuleThatDoesNotGetTriggeredShouldReturnNonEmptyResponseBody() {
-        $bot               = new WebBot();
+        $failureRuleOne    = FailureRule::instance()->setType( FailureRule::regex )->setParameters( "youWillNeverSeeThisTextOnThisPage4397ayir7ya" );
         $stepOneNameForBot = 'test';
-
-        $failureRuleOne = new FailureRule();
-        $failureRuleOne->setType( FailureRule::regex )->setParameters( "youWillNeverSeeThisTextOnThisPage4397ayir7ya" );
-
-        $stepOne = new Step();
-        $stepOne->setMethod( 'GET' )->setUrl( 'https://github.com/dprmc/' )->addFailureRule( 'testFailureRule', $failureRuleOne );
-
-        $body = $bot->addStep( $stepOneNameForBot, $stepOne )
+        $stepOne           = Step::instance()->setMethod( 'GET' )->setUrl( 'https://github.com/dprmc/' )->addFailureRule( 'testFailureRule', $failureRuleOne );
+        $body              = WebBot::instance()->addStep( $stepOneNameForBot, $stepOne )
             ->run()
             ->getResponseBody( $stepOneNameForBot );
-
         $this->assertNotEmpty( $body );
     }
 
     public function testAddingInvalidFailureRuleTypeShouldThrowException() {
         $this->expectException( UndefinedFailureRuleType::class );
-
-        $failureRuleOne = new FailureRule();
-        $failureRuleOne->setType( 'notValidFailureRuleType' );
+        FailureRule::instance()->setType( 'notValidFailureRuleType' );
     }
 
     public function testRunningFailureRuleWithInvalidFailureRuleTypeShouldThrowException() {
         $this->expectException( UndefinedFailureRuleType::class );
-
-        $failureRuleOne = new FailureRule();
-        $failureRuleOne->run( new Response(), false );
+        FailureRule::instance()->run( new Response(), false );
     }
 
     public function testRunningSuccessRuleShouldYieldInSuccessStepResult() {
-        $bot               = new WebBot();
+        $successRule       = SuccessRule::instance()->setType( SuccessRule::regex )->setParameters( "DPRMC" );
         $stepOneNameForBot = 'test';
-
-        $successRule = new SuccessRule();
-        $successRule->setType( SuccessRule::regex )->setParameters( "DPRMC" );
-
-        $stepOne = new Step();
-        $stepOne->setMethod( 'GET' )
+        $stepOne           = Step::instance()->setMethod( 'GET' )
             ->setUrl( 'https://github.com/dprmc/' )
             ->addSuccessRule( 'testSuccessRule', $successRule )
             ->setBreakOnSuccess( true );
-
-        $bot->addStep( $stepOneNameForBot, $stepOne )->run();
-
-        $success = $bot->getStepResult( $stepOneNameForBot );
-
+        $success           = WebBot::instance()->addStep( $stepOneNameForBot, $stepOne )->run()->getStepResult( $stepOneNameForBot );
         $this->assertInstanceOf( Success::class, $success );
     }
 
     public function testRunningSuccessRuleShouldYieldContinueToNextStepInStepResult() {
-        $bot               = new WebBot();
+        $successRule       = SuccessRule::instance()->setType( SuccessRule::regex )->setParameters( "YouWillNeverFindThisStringwo475owai7erasloery;a" );
         $stepOneNameForBot = 'test';
-
-        $successRule = new SuccessRule();
-        $successRule->setType( SuccessRule::regex )->setParameters( "YouWillNeverFindThisStringwo475owai7erasloery;a" );
-
-        $stepOne = new Step();
-        $stepOne->setMethod( 'GET' )
+        $stepOne           = Step::instance()->setMethod( 'GET' )
             ->setUrl( 'https://github.com/dprmc/' )
             ->addSuccessRule( 'testSuccessRule', $successRule )
             ->setBreakOnSuccess( true );
-
-        $bot->addStep( $stepOneNameForBot, $stepOne )->run();
-
-        $continue = $bot->getStepResult( $stepOneNameForBot );
-
+        $continue          = WebBot::instance()->addStep( $stepOneNameForBot, $stepOne )->run()->getStepResult( $stepOneNameForBot );
         $this->assertInstanceOf( ContinueToNextStep::class, $continue );
     }
 
     public function testRunningSuccessRuleWithInvalidSuccessRuleTypeShouldThrowException() {
         $this->expectException( UndefinedSuccessRuleType::class );
-        $successRule = new SuccessRule();
-        $successRule->setType( 'notValidType' );
-        $successRule->run( new Response(), false );
+        SuccessRule::instance()->setType( 'notValidType' )->run( new Response(), false );
     }
 
     public function testRunningSuccessRuleWithoutSuccessRuleTypeShouldThrowException() {
         $this->expectException( UndefinedSuccessRuleType::class );
-        $successRule = new SuccessRule();
-        $successRule->run( new Response(), false );
+        SuccessRule::instance()->run( new Response(), false );
     }
 
 }

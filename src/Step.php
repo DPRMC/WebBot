@@ -6,6 +6,8 @@ use DPRMC\WebBot\Exceptions\Step\InvalidMethodForStep;
 use GuzzleHttp\Psr7\Request;
 
 class Step {
+    protected $debug = false;
+
     protected $method;
     protected $url;
     protected $headers;
@@ -17,10 +19,13 @@ class Step {
     protected $successRules;
     protected $failureRules;
 
-
     protected $breakOnFailure = false;
     protected $breakOnSuccess = false;
 
+
+    public static function instance() {
+        return new static;
+    }
 
     public function __construct() {
         $this->headers      = [];
@@ -65,31 +70,33 @@ class Step {
         return $this;
     }
 
+
     /**
      * @link http://docs.guzzlephp.org/en/stable/request-options.html#verify Explains the "verify" option set to false.
      *
-     * @param \GuzzleHttp\Client $client
+     * @param $client
      *
-     * @return \DPRMC\WebBot\StepResult
+     * @return bool|\DPRMC\WebBot\ContinueToNextStep|\DPRMC\WebBot\Failure|\DPRMC\WebBot\Success
      */
     public function run( &$client ) {
         /**
          * @var \GuzzleHttp\Psr7\Response $response
          */
         $response = $client->send( $this->getRequestObject(), [ 'form_params'     => $this->formParams,
-                                                                'allow_redirects' => true,
-                                                                'debug'           => false,
+                                                                'allow_redirects' => false,
+                                                                'debug'           => $this->debug,
                                                                 'timeout'         => $this->timeout,
                                                                 'sink'            => null,
                                                                 'verify'          => false,
         ] );
+
 
         /**
          *
          */
         foreach ( $this->successRules as $successRule ):
             /**
-             * @var \DPRMC\WebBot\FailureRule $successRule
+             * @var \DPRMC\WebBot\SuccessRule $successRule
              */
             $stepResult = $successRule->run( $response, $this->breaksOnSuccess() );
             if ( false !== $stepResult ):
@@ -183,7 +190,6 @@ class Step {
      */
     public function addQueryParam( $name, $value ) {
         $this->queryParams[ $name ] = $value;
-
         return $this;
     }
 
@@ -196,9 +202,7 @@ class Step {
      * @return $this
      */
     public function addFailureRule( $name, $failureRule ) {
-
         $this->failureRules[ $name ] = $failureRule;
-
         return $this;
     }
 
@@ -209,12 +213,15 @@ class Step {
      * @return $this
      */
     public function addSuccessRule( $name, $successRule ) {
-
         $this->successRules[ $name ] = $successRule;
-
         return $this;
     }
 
+    public function setDebug( $debug ) {
+        $this->debug = (bool)$debug;
+
+        return $this;
+    }
 
 
 }
